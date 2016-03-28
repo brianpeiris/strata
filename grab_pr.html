@@ -5,7 +5,7 @@
 	<title>Climate Change</title>
 	<!--<script src="../UnityClient/js/src/AltGeoMatSerializer.js"></script>-->
 	<script src="http://sdk.altvr.com/libs/three.js/r73/build/three.js"></script>
-	<script src="http://sdk.altvr.com/libs/altspace.js/0.5.3/altspace.min.js"></script>
+	<script src="http://sdk.altvr.com/libs/altspace.js/0.5.3/altspace.js"></script>
 	<script src="http://sdk.altvr.com/libs/three.js/r73/examples/js/loaders/OBJMTLLoader.js"></script>
 	<script src="http://sdk.altvr.com/libs/three.js/r73/examples/js/loaders/MTLLoader.js"></script>
 	<script src="http://sdk.altvr.com/libs/three.js/r73/examples/js/geometries/TextGeometry.js"></script>
@@ -15,7 +15,6 @@
 <body>
 </body>
 <script>
-
 var sim;
 var instanceRef;
 
@@ -300,29 +299,29 @@ function addTextS(title, x, z){
 	scene.add(t_mesh);
 }
 
+var str_cache = {};
+function addString(str, color, name, x, y, z){
+	if (!str_cache[str]) {
+		var cache = str_cache[str] = {};
+		cache.geometry = new THREE.TextGeometry(str, {curveSegments: text_curve_segments });
+		cache.material = new THREE.MeshBasicMaterial({color:color});
+		cache.mesh = new THREE.Mesh(cache.geometry, cache.material);
+		cache.mesh.rotation.y = Math.PI / 2
+		cache.mesh.scale.z = 0.3;
+		cache.mesh.scale.multiplyScalar(.1);
+		cache.mesh.name = name
+	}
+	var t_mesh = str_cache[str].mesh;
+	t_mesh.position.set(x, y, z);
+	scene.add(t_mesh);
+}
+
 // Puts text in the corner to label what we are seeing
 function addText(title, subtitle, postfix, x, y, z){
 	//Text
-	var t_geometry = new THREE.TextGeometry(title, {curveSegments: text_curve_segments });
-	var t_material = new THREE.MeshBasicMaterial({color:'#ffffff'});
-	var t_mesh = new THREE.Mesh(t_geometry, t_material);
-	t_mesh.position.set(x, y, z);
-	t_mesh.rotation.y = Math.PI / 2
-	t_mesh.scale.z = 0.3;
-	t_mesh.scale.multiplyScalar(.1);
-	t_mesh.name = 'label_'+postfix
-	scene.add(t_mesh);
-
-	if (subtitle != ''){
-		var t_geometry = new THREE.TextGeometry(subtitle, {curveSegments: text_curve_segments });
-		var t_material = new THREE.MeshBasicMaterial({color:'#cccccc'});
-		var t_mesh = new THREE.Mesh(t_geometry, t_material);
-		t_mesh.position.set(x, y-15, z);
-		t_mesh.rotation.y = Math.PI / 2
-		t_mesh.scale.z = 0.3;
-		t_mesh.scale.multiplyScalar(.1);
-		t_mesh.name = 'label_sub_'+postfix
-		scene.add(t_mesh);
+	addString(title, '#ffffff', 'label_sub_'+postfix, x, y, z);
+	if (subtitle) {
+		addString(subtitle, '#cccccc', 'label_'+postfix, x, y-15, z);
 	}
 }
 
