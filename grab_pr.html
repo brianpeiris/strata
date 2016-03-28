@@ -3,9 +3,8 @@
 <head>
 	<meta charset=utf-8>
 	<title>Climate Change</title>
-	<!--<script src="../UnityClient/js/src/AltGeoMatSerializer.js"></script>-->
 	<script src="http://sdk.altvr.com/libs/three.js/r73/build/three.js"></script>
-	<script src="http://sdk.altvr.com/libs/altspace.js/0.5.3/altspace.js"></script>
+	<script src="http://sdk.altvr.com/libs/altspace.js/0.5.3/altspace.min.js"></script>
 	<script src="http://sdk.altvr.com/libs/three.js/r73/examples/js/loaders/OBJMTLLoader.js"></script>
 	<script src="http://sdk.altvr.com/libs/three.js/r73/examples/js/loaders/MTLLoader.js"></script>
 	<script src="http://sdk.altvr.com/libs/three.js/r73/examples/js/geometries/TextGeometry.js"></script>
@@ -15,6 +14,7 @@
 <body>
 </body>
 <script>
+/* global THREE, altspace */
 var sim;
 var instanceRef;
 
@@ -34,6 +34,8 @@ enclosure.then(function(val) {
 	}).then(function(connection) {
 		instanceRef = connection.instance;    
 		buildSpace(val.innerWidth, val.innerHeight, val.innerDepth, val.pixelsPerMeter);
+	}).catch(function (err) {
+		console.error(err, err.toString());
 	});
 
 
@@ -109,6 +111,7 @@ function recalculate(){
 }
 
 function drawResults(){
+	if (!results.length) { return; }
 	clearAllLabels();
 	x = -256
 
@@ -287,9 +290,8 @@ function clearAllLabels(){
 
 function addTextS(title, x, z){
 	//Text
-	var t_geometry = new THREE.TextGeometry(title, {curveSegments: text_curve_segments });
-	var t_material = new THREE.MeshBasicMaterial({color:'#333333'});
-	var t_mesh = new THREE.Mesh(t_geometry, t_material);
+	var t_material = getColoredMaterial('#333333');
+	var t_mesh = constructString(title, t_material);
 	t_mesh.position.set(x, -512, z);
 	t_mesh.rotation.x = -1* Math.PI / 2
 	t_mesh.rotation.z = Math.PI / 2
@@ -299,16 +301,49 @@ function addTextS(title, x, z){
 	scene.add(t_mesh);
 }
 
+var char_cache = {};
+function constructString(str, mat){
+	var strObj = new THREE.Object3D();
+	var offset = 0;
+	for (var i = 0; i < str.length; i++) {
+		if (!char_cache[str[i]]) {
+			var char_geometry = new THREE.TextGeometry(str[i], {curveSegments: text_curve_segments });
+			char_geometry.computeBoundingBox();
+			char_cache[str[i]] = new THREE.Mesh(char_geometry, mat);
+		}
+		var char = char_cache[str[i]].clone();
+		char.material = mat;
+		char.position.x = offset;
+		var char_width = char.geometry.boundingBox.size().x;
+		if (char_width === -Infinity) { char_width = 20; }
+		char_width += 15;
+		// HACK because the digit '1' seems to have weird kerning.
+		if (str[i] === '1') {
+			char.position.x -= 20;
+		}
+		offset += char_width;
+		strObj.add(char);
+	}
+	return strObj;
+}
+
+var str_mat_cache = {}
+function getColoredMaterial(color) {
+	if (!str_mat_cache[color]) {
+		str_mat_cache[color] = new THREE.MeshBasicMaterial({color:color});
+	}
+	return str_mat_cache[color];
+}
+
 var str_cache = {};
-function addString(str, color, name, x, y, z){
+function addString(str, color, name, x, y, z, scale){
 	if (!str_cache[str]) {
 		var cache = str_cache[str] = {};
-		cache.geometry = new THREE.TextGeometry(str, {curveSegments: text_curve_segments });
-		cache.material = new THREE.MeshBasicMaterial({color:color});
-		cache.mesh = new THREE.Mesh(cache.geometry, cache.material);
+		var mat = getColoredMaterial(color);
+		cache.mesh = constructString(str, mat);
 		cache.mesh.rotation.y = Math.PI / 2
 		cache.mesh.scale.z = 0.3;
-		cache.mesh.scale.multiplyScalar(.1);
+		cache.mesh.scale.multiplyScalar(scale);
 		cache.mesh.name = name
 	}
 	var t_mesh = str_cache[str].mesh;
@@ -319,9 +354,9 @@ function addString(str, color, name, x, y, z){
 // Puts text in the corner to label what we are seeing
 function addText(title, subtitle, postfix, x, y, z){
 	//Text
-	addString(title, '#ffffff', 'label_sub_'+postfix, x, y, z);
+	addString(title, '#ffffff', 'label_sub_'+postfix, x, y, z, 0.1);
 	if (subtitle) {
-		addString(subtitle, '#cccccc', 'label_'+postfix, x, y-15, z);
+		addString(subtitle, '#cccccc', 'label_'+postfix, x, y-15, z, 0.1);
 	}
 }
 
@@ -331,31 +366,12 @@ function addTitle(title, subtitle, postfix, x, y, z){
 	y = 0
 	z = (z/2)
 
-
 	//Text
-	var t_geometry = new THREE.TextGeometry(title, {curveSegments: text_curve_segments });
-	var t_material = new THREE.MeshBasicMaterial({color:'#ffffff'});
-	var t_mesh = new THREE.Mesh(t_geometry, t_material);
-	t_mesh.position.set(x, y, z);
-	t_mesh.rotation.y = Math.PI / 2
-	t_mesh.scale.z = 0.3;
-	t_mesh.scale.multiplyScalar(.8);
-	t_mesh.name = 'title_'+postfix
-	scene.add(t_mesh);
+	addString(title, '#ffffff', 'title_'+postfix, x, y, z, 0.8);
 
-	if (subtitle != ''){
-		var t_geometry = new THREE.TextGeometry(subtitle, {curveSegments: text_curve_segments });
-		var t_material = new THREE.MeshBasicMaterial({color:'#cccccc'});
-		var t_mesh = new THREE.Mesh(t_geometry, t_material);
-		t_mesh.position.set(x, y-65, z);
-		t_mesh.rotation.y = Math.PI / 2
-		t_mesh.scale.z = 0.3;
-		t_mesh.scale.multiplyScalar(.4);
-		t_mesh.name = 'title_sub_'+postfix
-		scene.add(t_mesh);
+	if (subtitle){
+		addString(subtitle, '#cccccc', 'title_sub_'+postfix, x, y-65, z, 0.4);
 	}
-
-
 }
 
 function animate(){
