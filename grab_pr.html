@@ -28,17 +28,17 @@ enclosure = altspace.getEnclosure()
 enclosure.then(function(val) {
 
 	altspace.utilities.sync.connect({
-            appId: 'sudaClimateChange',
-	        authorId: inCodePen ? altspace.utilities.codePen.getAuthorId() : 'AltspaceVR',
-	        instanceId: inCodePen ? altspace.utilities.codePen.getPenId() : null
-	    }).then(function(connection) {
-	        instanceRef = connection.instance;    
-			buildSpace(val.innerWidth, val.innerHeight, val.innerDepth, val.pixelsPerMeter);
-	    });
+		appId: 'sudaClimateChange',
+		authorId: inCodePen ? altspace.utilities.codePen.getAuthorId() : 'AltspaceVR',
+		instanceId: inCodePen ? altspace.utilities.codePen.getPenId() : null
+	}).then(function(connection) {
+		instanceRef = connection.instance;    
+		buildSpace(val.innerWidth, val.innerHeight, val.innerDepth, val.pixelsPerMeter);
+	});
 
 
 }).otherwise(function (error) {
-    console.error(error, error.toString());
+	console.error(error, error.toString());
 });
 
 var pilars = new Array();
