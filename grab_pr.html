@@ -72,6 +72,7 @@ var old_mpg_lookup = [8, 9, 10, 11, 11, 12, 13, 14, 14, 15, 15, 16, 17, 17, 17, 
 var new_mpg_lookup = [18, 18, 18, 18, 19, 20, 20, 21, 21, 22, 23, 23, 24, 25, 26, 27, 28, 29, 30, 31, 33, 33, 34, 37, 37, 39, 39, 43, 43, 43, 43, 43, 43, 46, 46, 46];
 
 function recalculate(){
+	if (!pilars.length) { return; }
 	console.log('recalculating')
 	rebate = (Math.abs(pilars[3].position.x)/150*9000)+1000
 	rebate = Math.round(rebate/100)*100
@@ -172,35 +173,37 @@ function buildSpace(x, y, z, pixelsPerMeter){
 
 	sceneSync = altspace.utilities.behaviors.SceneSync(instanceRef, {
 			instantiators: {
-				'Slider': function(){
-					console.log('instantiators')
-					for(var i=0; i<4; i++){
-				
-						pilars.push(new THREE.Mesh( lineGeometry, lineMaterial ));
-						y_value = -1*(y/2)+(boxHeight/2);
-						pilars[i].position.set( -150, y_value, z*((i+1)/5)-(z/2))
-						prev_pilars.push(y_value)
-						
-						pilars[i].addBehaviors(
-							altspace.utilities.behaviors.Object3DSync({position: true}),
-							altspace.utilities.behaviors.Drag({
-											x: {min: -150, max: 0},
-						          			y: {min: -512, max: -512}
-						        		})
-									);
-						
-						scene.add(pilars[i]);
-						console.log('adding pilars')
-				
-						groove = new THREE.Mesh( groove_geo, groove_mat )
-						groove.position.set(-75, -512, z*((i+1)/5)-(z/2))
-						scene.add(groove);
-				
-					}
+				'Slider': function(initData){
+					var i = initData.index;
+					pilars.push(new THREE.Mesh( lineGeometry, lineMaterial ));
+					y_value = -1*(y/2)+(boxHeight/2);
+					pilars[i].position.set( -150, y_value, z*((i+1)/5)-(z/2))
+					prev_pilars.push(y_value)
+					
+					pilars[i].addBehaviors(
+						altspace.utilities.behaviors.Object3DSync({position: true}),
+						altspace.utilities.behaviors.Drag({
+							x: {min: -150, max: 0},
+							y: {min: -512, max: -512}
+						})
+					);
+					
+					scene.add(pilars[i]);
+					console.log('adding pilars')
+			
+					groove = new THREE.Mesh( groove_geo, groove_mat )
+					groove.position.set(-75, -512, z*((i+1)/5)-(z/2))
+					scene.add(groove);
+
+					return pilars[i];
 				}
 			},
-			ready: function(){
-				return				
+			ready: function(firstInInstance){
+				if (firstInInstance) {
+					for(var i=0; i<4; i++){
+						sceneSync.instantiate('Slider', { index: i });
+					}
+				}
 			}
 		});
 		scene.addBehavior(sceneSync);
@@ -252,11 +255,11 @@ function buildSpace(x, y, z, pixelsPerMeter){
 	addTextS('$10,000', -150, 1024*(4/5) - 420)
 	
 	// SEVEN Results Pilars
-	var lineGeometry = new THREE.CylinderGeometry(40,40,(125*4),20);
-	var lineMaterial = new THREE.MeshBasicMaterial( { color: 0x990000 } );
+	var resultGeometry = new THREE.CylinderGeometry(40,40,(125*4),20);
+	var resultMaterial = new THREE.MeshBasicMaterial( { color: 0x990000 } );
 
 	for(var i=0; i<5; i++){
-		results.push(new THREE.Mesh( lineGeometry, lineMaterial ));
+		results.push(new THREE.Mesh( resultGeometry, resultMaterial ));
 		results[i].position.set( 0-(x/4), -1*(y/2)+(125/2), z*((i+1)/6)-(z/2))
 		scene.add(results[i]);
 	}
@@ -359,10 +362,12 @@ function animate(){
 	renderer.render(scene)
 	
 	re_render = false;
-	for(var i=0; i<4; i++){
-		if(prev_pilars[i] != pilars[i].position.x ){
-			prev_pilars[i] = pilars[i].position.x
-			re_render = true
+	if (pilars.length) {
+		for(var i=0; i<4; i++){
+			if(prev_pilars[i] != pilars[i].position.x ){
+				prev_pilars[i] = pilars[i].position.x
+				re_render = true
+			}
 		}
 	}
 	
