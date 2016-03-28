@@ -13,6 +13,7 @@
 </head>
 <body>
 </body>
+<script src="utils.js"></script>
 <script src="linegraph.js"></script>
 <script>
 
@@ -44,6 +45,8 @@ function buildSpace(width, height, depth, pixelsPerMeter){
 	radius = (width / 2) * circle_radius
 	radius_inner = (width / 2) * (circle_radius - 0.03)
 	pixelsPerMeter = 125
+	var lineGeometry = new THREE.CylinderGeometry(1,1,(pixelsPerMeter*2),6);
+	var lineMaterial = new THREE.MeshBasicMaterial( { color: 0x666666 } );
 
 	for(var i=0; i<360; i+=(360/poll_count)){
 		var x = Math.sin(toRadians(i)) * radius
@@ -54,8 +57,6 @@ function buildSpace(width, height, depth, pixelsPerMeter){
 		var x_next = Math.sin(toRadians(i+(360/poll_count))) * radius
 		var y_next = Math.cos(toRadians(i+(360/poll_count))) * radius
 	 
-		var lineGeometry = new THREE.CylinderGeometry(1,1,(pixelsPerMeter*2),6);
-		var lineMaterial = new THREE.MeshBasicMaterial( { color: 0x666666 } );
 		var line = new THREE.Mesh( lineGeometry, lineMaterial );
 		line.position.set(x, (-1*(height/2))+(pixelsPerMeter*2), y)
 		scene.add(line);
@@ -112,9 +113,8 @@ function buildSpace(width, height, depth, pixelsPerMeter){
 
 function colSphereText(x, y, z, title, postfix, color1){
 	
-	t_geometry = new THREE.TextGeometry(title, {curveSegments: 4 });
 	t_material = new THREE.MeshBasicMaterial({color:'#dedede'});
-	t_mesh = new THREE.Mesh(t_geometry, t_material);
+	t_mesh = constructString(title, t_material);
 	t_mesh.position.set(x, z, y);
 	t_mesh.rotation.y = postfix * (Math.PI / 180) + (Math.PI)
 	t_mesh.scale.z = 0.3;
@@ -127,9 +127,8 @@ function colSphereText(x, y, z, title, postfix, color1){
 
 function colLineText(x, y, z, title, postfix){
 	
-	t_geometry = new THREE.TextGeometry(title, {curveSegments: 4 });
 	t_material = new THREE.MeshBasicMaterial({color:'#666666'});
-	t_mesh = new THREE.Mesh(t_geometry, t_material);
+	t_mesh = constructString(title, t_material);
 	t_mesh.position.set(x, y, z);
 	t_mesh.rotation.y = postfix * (Math.PI / 180) + (Math.PI)
 	t_mesh.scale.z = 0.3;

@@ -3,13 +3,14 @@
 <head>
 	<meta charset=utf-8>
 	<title>Climate Change</title>
-	<script src="http://sdk.altvr.com/libs/three.js/r73/build/three.js"></script>
+	<script src="http://sdk.altvr.com/libs/three.js/r73/build/three.min.js"></script>
 	<script src="http://sdk.altvr.com/libs/altspace.js/0.5.3/altspace.min.js"></script>
 	<script src="http://sdk.altvr.com/libs/three.js/r73/examples/js/loaders/OBJMTLLoader.js"></script>
 	<script src="http://sdk.altvr.com/libs/three.js/r73/examples/js/loaders/MTLLoader.js"></script>
 	<script src="http://sdk.altvr.com/libs/three.js/r73/examples/js/geometries/TextGeometry.js"></script>
 	<script src="http://sdk.altvr.com/libs/three.js/r73/examples/js/utils/FontUtils.js"></script>
 	<script src="http://sdk.altvr.com/libs/three.js/r73/examples/fonts/helvetiker_regular.typeface.js"></script>
+	<script src="utils.js"></script>
 </head>
 <body>
 </body>
@@ -72,8 +73,6 @@ var dollars_per_ton_on_balance = 0
 var old_mpg_lookup = [8, 9, 10, 11, 11, 12, 13, 14, 14, 15, 15, 16, 17, 17, 17, 18, 18, 18, 19, 19, 19, 19, 19, 19, 20, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21];
 
 var new_mpg_lookup = [18, 18, 18, 18, 19, 20, 20, 21, 21, 22, 23, 23, 24, 25, 26, 27, 28, 29, 30, 31, 33, 33, 34, 37, 37, 39, 39, 43, 43, 43, 43, 43, 43, 46, 46, 46];
-
-var text_curve_segments = 1;
 
 function recalculate(){
 	if (!pilars.length) { return; }
@@ -299,32 +298,6 @@ function addTextS(title, x, z){
 	t_mesh.scale.z = 0.3;
 	t_mesh.scale.multiplyScalar(.1);
 	scene.add(t_mesh);
-}
-
-var char_cache = {};
-function constructString(str, mat){
-	var strObj = new THREE.Object3D();
-	var offset = 0;
-	for (var i = 0; i < str.length; i++) {
-		if (!char_cache[str[i]]) {
-			var char_geometry = new THREE.TextGeometry(str[i], {curveSegments: text_curve_segments });
-			char_geometry.computeBoundingBox();
-			char_cache[str[i]] = new THREE.Mesh(char_geometry, mat);
-		}
-		var char = char_cache[str[i]].clone();
-		char.material = mat;
-		char.position.x = offset;
-		var char_width = char.geometry.boundingBox.size().x;
-		if (char_width === -Infinity) { char_width = 20; }
-		char_width += 15;
-		// HACK because the digit '1' seems to have weird kerning.
-		if (str[i] === '1') {
-			char.position.x -= 20;
-		}
-		offset += char_width;
-		strObj.add(char);
-	}
-	return strObj;
 }
 
 var str_mat_cache = {}
