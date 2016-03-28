@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+	<meta charset=utf-8>
+	<title>Piles of Cash</title>
+	<script src="http://sdk.altvr.com/libs/three.js/r73/build/three.js"></script>
+	<script src="http://sdk.altvr.com/libs/altspace.js/latest/altspace.min.js"></script>
+	<script src="http://sdk.altvr.com/libs/three.js/r73/examples/js/loaders/MTLLoader.js"></script>
+	<script src="http://sdk.altvr.com/libs/three.js/r73/examples/js/geometries/TextGeometry.js"></script>
+	<script src="http://sdk.altvr.com/libs/three.js/r73/examples/js/utils/FontUtils.js"></script>
+	<script src="http://sdk.altvr.com/libs/three.js/r73/examples/fonts/helvetiker_regular.typeface.js"></script>
+</head>
+<body>
+</body>
+<script>
+
+
+
+var scene = new THREE.Scene();
+var renderer = altspace.getThreeJSRenderer();
+
+var time_in_scene = 1000;
+var column_i = 0;
+var steps = 0;
+var max_steps = 100;
+var from_slide = 0;
+var to_slide = 1;
+var break_out = 0;
+
+max_width = 57;
+max_depth = 30;
+
+var slides = new Array();
+slides[0]  = new Array();
+slides[1]  = new Array();
+slides[2]  = new Array();
+slides[3]  = new Array();
+slides[4]  = new Array();
+slides[5]  = new Array();
+slides[6]  = new Array();
+
+function getRandomIntInclusive(min, max) {
+  return ''+(Math.floor(Math.random() * (max - min + 1)) + min);
+}
+
+// Money Textures
+var materialCreator = new THREE.MTLLoader.MaterialCreator();
+materialCreator.crossOrigin = 'anonymous';
+
+var geometry = new THREE.BoxGeometry(1, 1, 1);
+//var material = new THREE.MeshFaceMaterial(materials);
+
+var bill100 = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({color:'#FFFFFF', 'map': materialCreator.loadTexture('http://sudabot.com/vr/images/money_face_90.jpg')}));
+
+
+// Setup all the stacks
+var geometry = new THREE.BoxGeometry(1, 1, 1);
+var material = new THREE.MeshBasicMaterial({color:'#009999'});
+var materialCreator = new THREE.MTLLoader.MaterialCreator();
+materialCreator.crossOrigin = 'anonymous';
+money_face = materialCreator.loadTexture('http://sudabot.com/vr/images/money_face.jpg')
+money_side = materialCreator.loadTexture('http://sudabot.com/vr/images/money-side.png')
+var money_face_mat = new THREE.MeshBasicMaterial({color:'#FFFFFF', 'map': money_face});
+var money_side_mat = new THREE.MeshBasicMaterial({color:'#FFFFFF', 'map': money_side})
+
+var bill = new Array();
+var faux_stack = new Array();
+
+for(var i=0; i<max_width; i++){
+	temp = new Array();
+	side_temp = new Array();
+	for(var j=0; j<max_depth; j++){
+		new_hex = getRandomIntInclusive(0,9)+getRandomIntInclusive(0,9)+getRandomIntInclusive(0,9)+getRandomIntInclusive(0,9)+getRandomIntInclusive(0,9)+getRandomIntInclusive(0,9)
+		temp.push(new THREE.Mesh(geometry, money_face_mat));
+		side_temp.push(new THREE.Mesh(geometry, money_side_mat));
+		//temp.push(new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({color:'#'+new_hex})));
+	}
+	bill.push(temp)
+	faux_stack.push(side_temp)
+}
+
+// Set everyone to ZERO
+for(var k=0; k<slides.length; k++){
+	for(var i=0; i<max_width; i++){
+		temp = new Array()
+		for(var j=0; j<max_depth; j++){
+			temp.push(-2);
+		}
+		slides[k].push(temp)
+	}
+}
+
+function moveBox(){
+	steps+=1;
+	for(var i=0; i<max_width; i++){
+		for(var j=0; j<max_depth; j++){
+			//console.log(slides[from_slide][i][j][0])
+			box_from = slides[from_slide][i][j]
+			box_to = slides[to_slide][i][j]
+			box_diff = Math.abs(box_to - box_from);
+			//new_x = Math.cos(((1 - (steps/max_steps) * 90) * (Math.PI / 90))/2);
+			new_x = 1 -(steps/max_steps)
+
+
+			if (box_to > box_from){
+				new_pos = ((box_to - Math.ceil((box_diff*new_x))))
+				bill[i][j].position.y = new_pos - 512 - 2;	
+				faux_stack[i][j].scale.y = new_pos*2;		
+			} else {
+				new_pos = ((box_to + Math.ceil((box_diff*new_x))))
+				bill[i][j].position.y = new_pos - 512 - 2;	
+				faux_stack[i][j].scale.y = new_pos*2;			
+			}
+	
+			// fix any rounding at the end of the animation
+			if (steps == max_steps){
+				bill[i][j].position.y = box_to - 512 - 2;
+				faux_stack[i][j].scale.y = box_to*2;
+			}
+		}
+	}
+
+	if (steps < max_steps){
+		setTimeout(moveBox, 10);
+	} else {
+		console.log('step')
+		steps = 0;
+		from_slide +=1;
+		to_slide +=1;
+		if (to_slide > 6)   { to_slide   = 0; }
+		if (from_slide > 6) { from_slide = 0; }
+		break_out+= 1
+
+		// Not sure why this is so short?
+		setTimeout(resetLabels, 4*time_in_scene);						
+	}
+}
+
+function resetLabels(){
+	clearAllLabels()
+	showAllLabels('slide'+to_slide)
+	moveBox()
+}
+
+enclosure = altspace.getEnclosure()
+enclosure.then(function(val) {
+	buildSpace(val.innerWidth, val.innerHeight, val.innerDepth, val.pixelsPerMeter);
+});
+
+function buildSpace(x, y, z, pixelsPerMeter){
+	// Dollar bill size 66.3 mm (2.61 inches) wide, 166 mm (6.14 inches)
+	pixelsPerMM = pixelsPerMeter/1000
+
+	// Single Spinning $100
+	bill100.scale.set(166*pixelsPerMM, 67*pixelsPerMM, 1);
+	bill100.position.set((x/2)-pixelsPerMeter, (-1*y/2)+pixelsPerMeter, (-1*z/2)+pixelsPerMeter)
+	scene.add(bill100)
+	var t_geometry = new THREE.TextGeometry('$100 Bill', {curveSegments: 4 });
+	var t_material = new THREE.MeshBasicMaterial({color:'#ffffff'});
+	var t_mesh = new THREE.Mesh(t_geometry, t_material);
+	t_mesh.position.set((x/2)-pixelsPerMeter, (-1*y/2), -300);
+	t_mesh.rotation.y = Math.PI / 2
+	t_mesh.scale.z = 0.3;
+	t_mesh.scale.multiplyScalar(.4);
+	scene.add(t_mesh);
+
+
+
+	for(var i=0; i<max_width; i++){
+		for(var j=0; j<max_depth; j++){
+			bill[i][j].scale.set(67*pixelsPerMM, 1,  166*pixelsPerMM);
+			bill[i][j].position.set(i*10 - (x/2) + 256, 0 - (y/2) - 2, j*25 - (z/2) + 128)
+			scene.add(bill[i][j])
+
+
+			faux_stack[i][j].scale.set(67*pixelsPerMM, 1,  166*pixelsPerMM);
+			faux_stack[i][j].position.set(i*10 - (x/2) + 256, 0 - (y/2) - 3, j*25 - (z/2) + 128)
+			scene.add(faux_stack[i][j])
+
+		}
+	}
+
+	addText('$1 Million', '', 'slide0', x, y, z);
+	addText('$1 Billion', '', 'slide1', x, y, z);
+	addText('$20,800', 'CA Annual Minimum Wage', 'slide2', x, y, z);
+	addText('$200,000,000', 'Titanic Film Budget', 'slide3', x, y, z);
+	addText('$2,180,000,000', 'Titanic Film Income', 'slide4', x, y, z);
+	addText('$1,700,000,000', 'Space Shuttle Endevor', 'slide5', x, y, z);
+	addText('$450,000,000', 'Average Shuttle Launch', 'slide6', x, y, z);
+
+
+	brick_width = (67*pixelsPerMM);
+	brick_height = (10.922*pixelsPerMM)
+	brick_depth = (166*pixelsPerMM)
+
+	// 1 million USD in $100s
+	for(var i = 20; i<25; i++){
+		for(var j=14; j<16; j++){
+			slides[0][i][j] = 10*brick_height
+		}
+	}
+	// 1 Billion USD in $100s
+	for(var i = 0; i<50; i++){
+		for(var j=5; j<25; j++){
+			slides[1][i][j] = 100*brick_height
+		}
+	}	
+
+	// Minimum Wage
+	for(var i = 25; i<26; i++){
+		for(var j=14; j<15; j++){
+			slides[2][i][j] = 2*brick_height
+		}
+	}	
+
+
+	
+	// Titanic Film Budget
+	for(var i = 0; i<50; i++){
+		for(var j=5; j<25; j++){
+			slides[3][i][j] = 20*brick_height
+		}
+	}	
+	
+
+	// Titanic Film Income
+	for(var i = 0; i<54; i++){
+		for(var j=5; j<25; j++){
+			slides[4][i][j] = 202*brick_height
+		}
+	}
+	
+
+	// Shace shuttle Endevor
+	for(var i = 0; i<57; i++){
+		for(var j=0; j<30; j++){
+			slides[5][i][j] = 100*brick_height
+		}
+	}
+
+
+	// Shuttle Launch
+	for(var i = 0; i<50; i++){
+		for(var j=5; j<25; j++){
+			slides[6][i][j] = 45*brick_height
+		}
+	}
+
+	moveBox();
+}
+
+
+// Show the stacks with the correct name
+function showAllLabels(postfix){
+	for(var i=0; i<scene.children.length; i++){
+		if(scene.children[i].name == 'slide'+postfix){
+			scene.children[i].visible = true
+		}
+	}
+}
+
+// Hide all the stacks
+function clearAllLabels(){
+	for(var i=0; i<scene.children.length; i++){
+		if(scene.children[i].name.substr(0,5) == 'slide'){
+			scene.children[i].visible = false
+		}
+	}
+}
+
+
+// Puts text in the corner to label what we are seeing
+function addText(title, subtitle, postfix, x, y, z){
+	x = (-1*x/2)
+	y = 0
+	z = (z/2)
+
+	//Text
+	var t_geometry = new THREE.TextGeometry(title, {curveSegments: 4 });
+	var t_material = new THREE.MeshBasicMaterial({color:'#ffffff'});
+	var t_mesh = new THREE.Mesh(t_geometry, t_material);
+	t_mesh.position.set(x, y, z);
+	t_mesh.rotation.y = Math.PI / 2
+	t_mesh.scale.z = 0.3;
+	t_mesh.scale.multiplyScalar(1);
+	t_mesh.name = 'slide'+postfix
+	t_mesh.visible = false
+	scene.add(t_mesh);
+
+	if (subtitle != ''){
+		var t_geometry = new THREE.TextGeometry(subtitle, {curveSegments: 4 });
+		var t_material = new THREE.MeshBasicMaterial({color:'#cccccc'});
+		var t_mesh = new THREE.Mesh(t_geometry, t_material);
+		t_mesh.position.set(x, y-90, z);
+		t_mesh.rotation.y = Math.PI / 2
+		t_mesh.scale.z = 0.3;
+		t_mesh.scale.multiplyScalar(.6);
+		t_mesh.name = 'slide'+postfix
+		t_mesh.visible = false
+		scene.add(t_mesh);
+	}
+
+}
+
+function animate(){
+	requestAnimationFrame(animate)
+	bill100.rotation.y += 0.025
+	bill100.material.needsUpdate = true
+
+	renderer.render(scene)
+}
+var syncInstance = altspace.utilities.sync.getInstance({appId:"sudaMoney"});
+
+animate();
+
+</script>
+</html>

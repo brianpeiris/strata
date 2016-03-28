@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+<meta charset=utf-8>
+<title>Stocks Line Chart</title>
+<script src="http://sdk.altvr.com/libs/three.js/r73/build/three.js"></script>
+<script src="http://sdk.altvr.com/libs/altspace.js/latest/altspace.min.js"></script>
+<script src="http://sdk.altvr.com/libs/three.js/r73/examples/js/loaders/MTLLoader.js"></script>
+	<script src="http://sdk.altvr.com/libs/three.js/r73/examples/js/geometries/TextGeometry.js"></script>
+	<script src="http://sdk.altvr.com/libs/three.js/r73/examples/js/utils/FontUtils.js"></script>
+	<script src="http://sdk.altvr.com/libs/three.js/r73/examples/fonts/helvetiker_regular.typeface.js"></script>
+
+</head>
+<body>
+</body>
+<script src="linegraph.js"></script>
+<script>
+
+// MAIN
+
+// standard global variables
+var container, scene, camera, renderer, controls, stats;
+// custom global variables
+var cube;
+var scene = new THREE.Scene();
+var renderer = altspace.getThreeJSRenderer();
+var time_in_scene = 1000;
+var column_i = 0;
+var poll_count = 24;
+var circle_radius = .85
+
+enclosure = altspace.getEnclosure()
+enclosure.then(function(val) {
+	buildSpace(val.innerWidth, val.innerHeight, val.innerDepth, val.pixelsPerMeter);
+}).otherwise(function (error) {
+    console.error(error, error.toString());
+});
+
+
+var prev_point	= [0,0,0,0,0]
+var first_point = [lineData['Google']["0"],lineData['Amazon']["0"],lineData['Microsoft']["0"],lineData['Intel']["0"],0]
+
+function buildSpace(width, height, depth, pixelsPerMeter){
+	radius = (width / 2) * circle_radius
+	radius_inner = (width / 2) * (circle_radius - 0.03)
+	pixelsPerMeter = 125
+
+	for(var i=0; i<360; i+=(360/poll_count)){
+		var x = Math.sin(toRadians(i)) * radius
+		var y = Math.cos(toRadians(i)) * radius
+		var x_inner = Math.sin(toRadians(i)) * radius_inner
+		var y_inner = Math.cos(toRadians(i)) * radius_inner
+
+		var x_next = Math.sin(toRadians(i+(360/poll_count))) * radius
+		var y_next = Math.cos(toRadians(i+(360/poll_count))) * radius
+	 
+		var lineGeometry = new THREE.CylinderGeometry(1,1,(pixelsPerMeter*2),6);
+		var lineMaterial = new THREE.MeshBasicMaterial( { color: 0x666666 } );
+		var line = new THREE.Mesh( lineGeometry, lineMaterial );
+		line.position.set(x, (-1*(height/2))+(pixelsPerMeter*2), y)
+		scene.add(line);
+
+	
+	 	index = i/(360/poll_count) + 1
+	 	var new_point1 = lineData['Google'][index];
+		var new_point2 = lineData['Amazon'][index];
+		var new_point3 = lineData['Microsoft'][index];
+		var new_point4 = lineData['Intel'][index];
+		var new_point5 = Math.round(Math.random()*50);
+		var col_label = lineData['dates'][index] 
+
+		colLineText(x, -1*pixelsPerMeter, y, col_label, i);
+		//colLineText(0,0,0,'1','2');
+	 
+
+		scale_point1 = (new_point1 - first_point[0]) * 2.5
+		scale_point2 = (new_point2 - first_point[1]) * 2.5
+		scale_point3 = (new_point3 - first_point[2]) * 2.5
+		scale_point4 = (new_point4 - first_point[3]) * 2.5
+
+		lineSegment(x, y, (-1*(height/2))+(pixelsPerMeter*1.25)+prev_point[0], 
+			x_next, y_next, (-1*(height/2))+(pixelsPerMeter*1.25)+scale_point1, 
+			i, 0x308715, 0x308715, 'GOOG', new_point1, x_inner, y_inner )
+
+		lineSegment(x, y, (-1*(height/2))+(pixelsPerMeter*1.25)+prev_point[1], 
+			x_next, y_next, (-1*(height/2))+(pixelsPerMeter*1.25)+scale_point2, 
+			i, 0xd8b72a, 0xd8b72a, 'AMZN', new_point2, x_inner, y_inner )
+
+		lineSegment(x, y, (-1*(height/2))+(pixelsPerMeter*1.25)+prev_point[2], 
+			x_next, y_next, (-1*(height/2))+(pixelsPerMeter*1.25)+scale_point3, 
+			i, 0xf03026, 0xf03026, 'MSFT', new_point3, x_inner, y_inner )
+
+		lineSegment(x, y, (-1*(height/2))+(pixelsPerMeter*1.25)+prev_point[3], 
+			x_next, y_next, (-1*(height/2))+(pixelsPerMeter*1.25)+scale_point4, 
+			i, 0x09a5ff, 0x09a5ff, 'INTC', new_point4, x_inner, y_inner )
+		/*
+		lineSegment(x, y, (-1*(height/2))+(pixelsPerMeter*1.5)+prev_point5, 
+			x_next, y_next, (-1*(height/2))+(pixelsPerMeter*1.5)+scale_point5, 
+			i, 0x00cc00, 0x009900, 'Random', prev_point5, x_inner, y_inner )
+		*/
+		prev_point[0] = scale_point1
+		prev_point[1] = scale_point2
+		prev_point[2] = scale_point3
+		prev_point[3] = scale_point4
+		//prev_point5 = scale_point5
+	
+	}
+
+
+
+}
+
+function colSphereText(x, y, z, title, postfix, color1){
+	
+	t_geometry = new THREE.TextGeometry(title, {curveSegments: 4 });
+	t_material = new THREE.MeshBasicMaterial({color:'#dedede'});
+	t_mesh = new THREE.Mesh(t_geometry, t_material);
+	t_mesh.position.set(x, z, y);
+	t_mesh.rotation.y = postfix * (Math.PI / 180) + (Math.PI)
+	t_mesh.scale.z = 0.3;
+	t_mesh.scale.multiplyScalar(.08);
+	t_mesh.name = 'col_'+postfix+'_text_'+color1
+	t_mesh.visible = false;
+	scene.add(t_mesh);
+	
+}
+
+function colLineText(x, y, z, title, postfix){
+	
+	t_geometry = new THREE.TextGeometry(title, {curveSegments: 4 });
+	t_material = new THREE.MeshBasicMaterial({color:'#666666'});
+	t_mesh = new THREE.Mesh(t_geometry, t_material);
+	t_mesh.position.set(x, y, z);
+	t_mesh.rotation.y = postfix * (Math.PI / 180) + (Math.PI)
+	t_mesh.scale.z = 0.3;
+	t_mesh.scale.multiplyScalar(.08);
+	t_mesh.name = 'label_'+postfix
+	scene.add(t_mesh);
+	
+}
+
+
+function lineSegment(x1, y1, z1, x2, y2, z2, i, color1, color2, line_title, line_value, x_inner, y_inner ){
+	var geometry = new THREE.Geometry();
+	geometry.vertices.push(
+		new THREE.Vector3( x1, z1,   y1 ),
+		new THREE.Vector3( x2, z2,   y2 ),
+		new THREE.Vector3( x1, z1+2, y1 )
+	);
+
+	geometry.faces.push( new THREE.Face3( 0, 1, 2 ), new THREE.Face3( 2, 1, 0 ) );
+	geometry.computeBoundingSphere();
+	
+	var geometryMaterial = new THREE.MeshBasicMaterial( { color: color1 } );
+	var line = new THREE.Mesh( geometry, geometryMaterial );
+	line.name = 'col_'+i
+	line.visible = false
+	scene.add(line);
+		
+	var geometry = new THREE.Geometry();
+	geometry.vertices.push(
+		new THREE.Vector3( x1, z1+2, y1 ),
+		new THREE.Vector3( x2, z2+2, y2 ),
+		new THREE.Vector3( x2, z2,   y2 )
+	);
+
+	geometry.faces.push( new THREE.Face3( 0, 1, 2 ), new THREE.Face3( 2, 1, 0 ) );
+	geometry.computeBoundingSphere();
+	
+	var geometryMaterial = new THREE.MeshBasicMaterial( { color: color2 } );
+	var line = new THREE.Mesh( geometry, geometryMaterial );
+	line.name = 'col_'+i
+	line.visible = false
+	scene.add(line);
+
+	var geometry = new THREE.SphereGeometry( 4, 32, 32 );
+	var material = new THREE.MeshBasicMaterial( {color: color1} );
+	var sphere = new THREE.Mesh( geometry, material );
+	sphere.name = 'col_'+i+'_sphere_'+color1;
+	sphere.visible = false;
+	sphere.position.set(x1, z1, y1);
+
+	colSphereText(x_inner, y_inner, z1, line_title+': '+line_value, i, color1)
+	
+	sphere.addEventListener('cursorenter',function(e){
+		showToolTip('col_'+i+'_text_'+color1);
+	});
+	sphere.addEventListener('cursorleave',function(e){
+		hideToolTip('col_'+i+'_text_'+color1);
+	});
+	
+	scene.add( sphere );
+	
+}
+
+
+function showColumn(){
+	//console.log('i: '+column_i)
+	for(var i=0; i<scene.children.length; i++){
+		obj_name = ''+scene.children[i].name
+		if(obj_name == 'col_'+column_i){
+			scene.children[i].visible = true
+		}
+		
+		if(obj_name.substr(0, ((column_i+'').length + 12)) == 'col_'+column_i+'_sphere_'){
+			scene.children[i].visible = true
+		}
+		
+	}
+	column_i += (360/poll_count);
+	if (column_i > 360) { clearAllColumns(); column_i = 0; }
+	window.setTimeout(showColumn, time_in_scene);
+}
+
+// Show sphere text
+function showToolTip(sphere_name){
+	for(var i=0; i<scene.children.length; i++){
+		obj_name = ''+scene.children[i].name
+		if(obj_name == sphere_name){
+			scene.children[i].visible = true
+		}
+	}
+}	
+
+// Hide sphere text
+function hideToolTip(sphere_name){
+	for(var i=0; i<scene.children.length; i++){
+		obj_name = ''+scene.children[i].name
+		if(obj_name == sphere_name){
+			scene.children[i].visible = false
+		}
+	}
+}			
+
+// Hide all the stacks
+function clearAllColumns(){
+	for(var i=0; i<scene.children.length; i++){
+		obj_name = ''+scene.children[i].name
+		if(obj_name.substr(0,3) == 'col'){
+			scene.children[i].visible = false
+		}
+	}
+}
+
+function toRadians (angle) {
+  return angle * (Math.PI / 180);
+}
+
+function animate() 
+{
+    requestAnimationFrame( animate );
+	renderer.render(scene)
+}
+var syncInstance = altspace.utilities.sync.getInstance({appId:"sudaLineGraph"});
+
+animate()
+showColumn()
+
+</script>
+</html>
+

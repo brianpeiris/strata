@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+	<meta charset=utf-8>
+	<title>Climate Change</title>
+	<script src="http://sdk.altvr.com/libs/three.js/r73/build/three.js"></script>
+	<script src="http://sdk.altvr.com/libs/altspace.js/0.5.3/altspace.min.js"></script>
+	<script src="http://sdk.altvr.com/libs/three.js/r73/examples/js/loaders/OBJMTLLoader.js"></script>
+	<script src="http://sdk.altvr.com/libs/three.js/r73/examples/js/loaders/MTLLoader.js"></script>
+	<script src="http://sdk.altvr.com/libs/three.js/r73/examples/js/geometries/TextGeometry.js"></script>
+	<script src="http://sdk.altvr.com/libs/three.js/r73/examples/js/utils/FontUtils.js"></script>
+	<script src="http://sdk.altvr.com/libs/three.js/r73/examples/fonts/helvetiker_regular.typeface.js"></script>
+</head>
+<body>
+</body>
+<script>
+
+
+var scene = new THREE.Scene();
+var renderer = altspace.getThreeJSRenderer();
+var sceneSync;
+var timeoutId;
+
+
+enclosure = altspace.getEnclosure()
+enclosure.then(function(val) {
+	buildSpace(val.innerWidth, val.innerHeight, val.innerDepth, val.pixelsPerMeter);
+}).otherwise(function (error) {
+    console.error(error, error.toString());
+});
+
+var pilars = new Array();
+var results = new Array();
+
+var prev_pilars = new Array();
+var budget  = 2000000000 // Billion
+var old_mpg = 17 // Old Miles per Gallon
+var new_mpg = 24 // New Miles per Gallon
+var rebate  = 3500 // $3,500
+var overhead = 100000000 // FIXED $100,000,000
+
+var gallons_consumer_per_day = 378000000
+var gallons_consumer_per_hour = 0
+
+var cars_traded = 0
+var gallons_saved = 0
+var hours_saved = 0
+
+var kg_co2_per_gallon = 8.87
+var co2_saved = 0
+var percent_co2_saved = 0
+var cost_per_ton = 0
+var savings_less_gas = 0
+var savings_on_balance = 0
+var dollars_per_ton_on_balance = 0
+
+
+var old_mpg_lookup = [8, 9, 10, 11, 11, 12, 13, 14, 14, 15, 15, 16, 17, 17, 17, 18, 18, 18, 19, 19, 19, 19, 19, 19, 20, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21];
+
+var new_mpg_lookup = [18, 18, 18, 18, 19, 20, 20, 21, 21, 22, 23, 23, 24, 25, 26, 27, 28, 29, 30, 31, 33, 33, 34, 37, 37, 39, 39, 43, 43, 43, 43, 43, 43, 46, 46, 46];
+
+function recalculate(){
+	console.log('recalculating')
+	rebate = (Math.abs(pilars[3].position.x)/150*9000)+1000
+	rebate = Math.round(rebate/100)*100
+
+	budget = (Math.abs(pilars[0].position.x)/150*19990000000)+10000000
+
+	old_mpg = Math.round(Math.abs(pilars[1].position.x)/150*35)+10
+
+	new_mpg = Math.round(Math.abs(pilars[2].position.x)/150*35)+10
+
+	cars_traded = Math.round((budget - overhead) / rebate)
+	
+	avg_miles_left = .25*150000
+	gallons_old = avg_miles_left/old_mpg_lookup[parseInt(old_mpg)-10]
+	gallons_new = avg_miles_left/new_mpg_lookup[parseInt(new_mpg)-10]
+	gallons_saved_per_car = gallons_old - gallons_new
+	gallons_saved = Math.round(cars_traded*gallons_saved_per_car)
+
+	gallons_consumer_per_hour = gallons_consumer_per_day / 24
+	hours_saved = Math.round(gallons_saved / gallons_consumer_per_hour)
+	
+	co2_saved = Math.round((gallons_saved * (8.87/1000))/0.95)
+	percent_co2_saved = (co2_saved/6983000000) * 100
+	
+	cost_per_ton = budget/co2_saved
+	savings_less_gas = gallons_saved*3 //$3.00 per gallon
+	savings_on_balance = budget - savings_less_gas
+	dollars_per_ton_on_balance = dollars_per_ton_on_balance / co2_saved
+
+	drawResults();
+	
+}
+
+function drawResults(){
+	clearAllLabels();
+	x = -256
+
+	// Percentage CO2 Saved
+	scaler = percent_co2_saved/10
+	z = 1024*(1/6) - 480
+	results[0].scale.y = scaler;
+	results[0].position.y =  -512 + (scaler/2);
+	addText('% CO2 Saved', (Math.round(percent_co2_saved*100)/100)+'%', 0, x, (-470 + (scaler/2)*125*4), z);
+
+	// Tones of CO2 Saved
+	scaler = (co2_saved / 641400000)
+	z = 1024*(2/6) - 480
+	results[1].scale.y = scaler;
+	results[1].position.y = -512 + (scaler/2);
+	addText('Tons of CO2 Saved', (Math.round(co2_saved*100)/100)+' tons', 1, x, (-470 + (scaler/2)*125*4), z);
+
+	// Hours of Gas
+	scaler = (hours_saved / 4367)
+	z = 1024*(3/6) - 480
+	results[2].scale.y = scaler;
+	results[2].position.y = -512 + (scaler/2);
+	addText('Hours of Gas', (Math.round(hours_saved*100)/100)+' hours', 2, x, (-470 + (scaler/2)*125*4), z);
+
+	// Gallons Saved
+	scaler = (gallons_saved / 68696000000)
+	z = 1024*(4/6) - 480
+	results[3].scale.y = scaler;
+	results[3].position.y = -512 + (scaler/2);
+	addText('Gallons Saved', (Math.round(gallons_saved*100)/100)+' gallons', 3, x, (-470 + (scaler/2)*125*4), z);
+
+	// Cars Traded
+	scaler = (cars_traded / 19900000)
+	z = 1024*(5/6) - 480
+	results[4].scale.y = scaler;
+	results[4].position.y = -512 + (scaler/2);
+	addText('Old Cars Traded-in', (Math.round(cars_traded*100)/100)+' cars', 4, x, (-470 + ((scaler/2)*125*4)), z);
+
+
+}
+
+function buildSpace(x, y, z, pixelsPerMeter){
+	// Output our default pilars
+	// FOUR Draggable Pilars
+	var lineGeometry = new THREE.BoxGeometry(10, 10, 50)
+	var lineMaterial = new THREE.MeshBasicMaterial( { color: 0x49311c } );
+	boxHeight = 10
+
+	var panel_geo = new THREE.BoxGeometry(250, 1, 1024)
+	var panel_mat = new THREE.MeshBasicMaterial( { color: 0xbbbbbb } );
+
+	var groove_geo = new THREE.BoxGeometry(150, 2, 1)
+	var groove_mat = new THREE.MeshBasicMaterial( { color: 0x000000 } );
+
+
+	panel = new THREE.Mesh( panel_geo, panel_mat )
+	panel.position.set(-50, -512, 0)
+	scene.add(panel);
+	
+	for(var i=0; i<4; i++){
+
+		pilars.push(new THREE.Mesh( lineGeometry, lineMaterial ));
+		y_value = -1*(y/2)+(boxHeight/2);
+		pilars[i].position.set( -150, y_value, z*((i+1)/5)-(z/2))
+		prev_pilars.push(y_value)
+		
+
+		
+		pilars[i].addBehaviors(
+			
+			altspace.utilities.behaviors.Drag({
+							x: {min: -150, max: 0},
+		          			y: {min: -512, max: -512}
+		        		})
+					);
+		
+		scene.add(pilars[i]);
+		console.log('adding pilars')
+
+		groove = new THREE.Mesh( groove_geo, groove_mat )
+		groove.position.set(-75, -512, z*((i+1)/5)-(z/2))
+		scene.add(groove);
+
+	}
+
+	//addTitle('Car Trade-in Program', 'Adjust the sliders to see the impact on the climate', 'title', x, y, z);
+	addTitle('Car Trade-in Program', 'Adjust the sliders to impact the climate', 0, x, y, z);
+
+	addTextS('Program Budget', 35,  1024*(1/5) - 480)
+	addTextS('$0.1B',   0, 1024*(1/5) - 450)
+	addTextS('$5B',   -36, 1024*(1/5) - 450)
+	addTextS('$10B',  -75, 1024*(1/5) - 450)
+	addTextS('$15B', -110, 1024*(1/5) - 450)
+	addTextS('$20B', -150, 1024*(1/5) - 450)
+
+
+	addTextS('Old Car MPG', 35, 1024*(2/5) - 480)
+	addTextS('10 MPG',    0, 1024*(2/5) - 420)
+	addTextS('19 MPG',  -36, 1024*(2/5) - 420)
+	addTextS('27 MPG',  -75, 1024*(2/5) - 420)
+	addTextS('38 MPG', -110, 1024*(2/5) - 420)
+	addTextS('45 MPG', -150, 1024*(2/5) - 420)
+
+
+	addTextS('New Car MPG', 35, 1024*(3/5) - 480)
+	addTextS('10 MPG',    0, 1024*(3/5) - 420)
+	addTextS('19 MPG',  -36, 1024*(3/5) - 420)
+	addTextS('27 MPG',  -75, 1024*(3/5) - 420)
+	addTextS('38 MPG', -110, 1024*(3/5) - 420)
+	addTextS('45 MPG', -150, 1024*(3/5) - 420)
+
+
+	addTextS('Rebate',  35, 1024*(4/5) - 480)
+	addTextS('$1,000',     0, 1024*(4/5) - 420)
+	addTextS('$2,500',   -36, 1024*(4/5) - 420)
+	addTextS('$5,000',   -75, 1024*(4/5) - 420)
+	addTextS('$7,500',  -110, 1024*(4/5) - 420)
+	addTextS('$10,000', -150, 1024*(4/5) - 420)
+	
+	// SEVEN Results Pilars
+	var lineGeometry = new THREE.CylinderGeometry(40,40,(125*4),20);
+	var lineMaterial = new THREE.MeshBasicMaterial( { color: 0x990000 } );
+
+	for(var i=0; i<5; i++){
+		results.push(new THREE.Mesh( lineGeometry, lineMaterial ));
+		results[i].position.set( 0-(x/4), -1*(y/2)+(125/2), z*((i+1)/6)-(z/2))
+		scene.add(results[i]);
+	}
+	
+	recalculate();
+}
+
+
+
+// Remove labels so we can re-add them.
+function clearAllLabels(){
+	del_array = new Array()
+	sceneObjs = scene.children
+	for(var i=0; i<sceneObjs.length; i++){
+		if(sceneObjs[i].name.substr(0,5) == 'label'){
+			del_array.push(sceneObjs[i].name)
+		}
+	}
+	for(var i=0; i<del_array.length;i++){
+		scene.remove(scene.getObjectByName(del_array[i]))
+	}
+}
+
+function addTextS(title, x, z){
+	//Text
+	var t_geometry = new THREE.TextGeometry(title, {curveSegments: 4 });
+	var t_material = new THREE.MeshBasicMaterial({color:'#333333'});
+	var t_mesh = new THREE.Mesh(t_geometry, t_material);
+	t_mesh.position.set(x, -512, z);
+	t_mesh.rotation.x = -1* Math.PI / 2
+	t_mesh.rotation.z = Math.PI / 2
+
+	t_mesh.scale.z = 0.3;
+	t_mesh.scale.multiplyScalar(.1);
+	scene.add(t_mesh);
+}
+
+// Puts text in the corner to label what we are seeing
+function addText(title, subtitle, postfix, x, y, z){
+	//Text
+	var t_geometry = new THREE.TextGeometry(title, {curveSegments: 4 });
+	var t_material = new THREE.MeshBasicMaterial({color:'#ffffff'});
+	var t_mesh = new THREE.Mesh(t_geometry, t_material);
+	t_mesh.position.set(x, y, z);
+	t_mesh.rotation.y = Math.PI / 2
+	t_mesh.scale.z = 0.3;
+	t_mesh.scale.multiplyScalar(.1);
+	t_mesh.name = 'label_'+postfix
+	scene.add(t_mesh);
+
+	if (subtitle != ''){
+		var t_geometry = new THREE.TextGeometry(subtitle, {curveSegments: 4 });
+		var t_material = new THREE.MeshBasicMaterial({color:'#cccccc'});
+		var t_mesh = new THREE.Mesh(t_geometry, t_material);
+		t_mesh.position.set(x, y-15, z);
+		t_mesh.rotation.y = Math.PI / 2
+		t_mesh.scale.z = 0.3;
+		t_mesh.scale.multiplyScalar(.1);
+		t_mesh.name = 'label_sub_'+postfix
+		scene.add(t_mesh);
+	}
+}
+
+// Puts text in the corner to label what we are seeing
+function addTitle(title, subtitle, postfix, x, y, z){
+	x = (-1*x/2)
+	y = 0
+	z = (z/2)
+
+
+	//Text
+	var t_geometry = new THREE.TextGeometry(title, {curveSegments: 4 });
+	var t_material = new THREE.MeshBasicMaterial({color:'#ffffff'});
+	var t_mesh = new THREE.Mesh(t_geometry, t_material);
+	t_mesh.position.set(x, y, z);
+	t_mesh.rotation.y = Math.PI / 2
+	t_mesh.scale.z = 0.3;
+	t_mesh.scale.multiplyScalar(.8);
+	t_mesh.name = 'title_'+postfix
+	scene.add(t_mesh);
+
+	if (subtitle != ''){
+		var t_geometry = new THREE.TextGeometry(subtitle, {curveSegments: 4 });
+		var t_material = new THREE.MeshBasicMaterial({color:'#cccccc'});
+		var t_mesh = new THREE.Mesh(t_geometry, t_material);
+		t_mesh.position.set(x, y-65, z);
+		t_mesh.rotation.y = Math.PI / 2
+		t_mesh.scale.z = 0.3;
+		t_mesh.scale.multiplyScalar(.4);
+		t_mesh.name = 'title_sub_'+postfix
+		scene.add(t_mesh);
+	}
+
+
+}
+
+function animate(){
+	requestAnimationFrame(animate)
+	scene.updateAllBehaviors();
+	renderer.render(scene)
+	
+	re_render = false;
+	for(var i=0; i<4; i++){
+		if(prev_pilars[i] != pilars[i].position.x ){
+			prev_pilars[i] = pilars[i].position.x
+			re_render = true
+		}
+	}
+	
+	if (re_render){
+		window.clearTimeout(timeoutId)
+		timeoutId = window.setTimeout(recalculate, 300);
+	}
+	
+}
+console.log('Get Ready!')
+//var syncInstance = altspace.utilities.sync.getInstance({appId:"sudaClimateChange"});
+
+animate();
+
+</script>
+</html>
