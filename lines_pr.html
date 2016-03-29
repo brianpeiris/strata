@@ -34,7 +34,7 @@ enclosure = altspace.getEnclosure()
 enclosure.then(function(val) {
 	buildSpace(val.innerWidth, val.innerHeight, val.innerDepth, val.pixelsPerMeter);
 }).otherwise(function (error) {
-    console.error(error, error.toString());
+	console.error(error, error.toString());
 });
 
 
@@ -56,14 +56,14 @@ function buildSpace(width, height, depth, pixelsPerMeter){
 
 		var x_next = Math.sin(toRadians(i+(360/poll_count))) * radius
 		var y_next = Math.cos(toRadians(i+(360/poll_count))) * radius
-	 
+
 		var line = new THREE.Mesh( lineGeometry, lineMaterial );
 		line.position.set(x, (-1*(height/2))+(pixelsPerMeter*2), y)
 		scene.add(line);
 
 	
-	 	index = i/(360/poll_count) + 1
-	 	var new_point1 = lineData['Google'][index];
+		index = i/(360/poll_count) + 1
+		var new_point1 = lineData['Google'][index];
 		var new_point2 = lineData['Amazon'][index];
 		var new_point3 = lineData['Microsoft'][index];
 		var new_point4 = lineData['Intel'][index];
@@ -72,7 +72,7 @@ function buildSpace(width, height, depth, pixelsPerMeter){
 
 		colLineText(x, -1*pixelsPerMeter, y, col_label, i);
 		//colLineText(0,0,0,'1','2');
-	 
+
 
 		scale_point1 = (new_point1 - first_point[0]) * 2.5
 		scale_point2 = (new_point2 - first_point[1]) * 2.5
@@ -242,12 +242,12 @@ function clearAllColumns(){
 }
 
 function toRadians (angle) {
-  return angle * (Math.PI / 180);
+	return angle * (Math.PI / 180);
 }
 
 function animate() 
 {
-    requestAnimationFrame( animate );
+	requestAnimationFrame( animate );
 	renderer.render(scene)
 }
 var syncInstance = altspace.utilities.sync.getInstance({appId:"sudaLineGraph"});
