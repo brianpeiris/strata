@@ -112,6 +112,7 @@ function buildSpace(width, height, depth, pixelsPerMeter){
 
 }
 
+var sphere_texts = {};
 function colSphereText(x, y, z, title, postfix, color1){
 	
 	t_material = getColoredMaterial('#dedede');
@@ -120,10 +121,8 @@ function colSphereText(x, y, z, title, postfix, color1){
 	t_mesh.rotation.y = postfix * (Math.PI / 180) + (Math.PI)
 	t_mesh.scale.z = 0.3;
 	t_mesh.scale.multiplyScalar(.08);
-	t_mesh.name = 'col_'+postfix+'_text_'+color1
-	recursiveVisibility(t_mesh, false);
-	scene.add(t_mesh);
-	
+	t_mesh.name = 'col_'+postfix+'_text_'+color1;
+	sphere_texts[t_mesh.name] = t_mesh;
 }
 
 function colLineText(x, y, z, title, postfix){
@@ -214,22 +213,12 @@ function showColumn(){
 
 // Show sphere text
 function showToolTip(sphere_name){
-	for(var i=0; i<scene.children.length; i++){
-		obj_name = ''+scene.children[i].name
-		if(obj_name == sphere_name){
-			recursiveVisibility(scene.children[i], true);
-		}
-	}
+	scene.add(sphere_texts[sphere_name].clone());
 }	
 
 // Hide sphere text
 function hideToolTip(sphere_name){
-	for(var i=0; i<scene.children.length; i++){
-		obj_name = ''+scene.children[i].name
-		if(obj_name == sphere_name){
-			recursiveVisibility(scene.children[i], false);
-		}
-	}
+	scene.remove(scene.getObjectByName(sphere_name));
 }			
 
 // Hide all the stacks
