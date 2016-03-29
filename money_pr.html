@@ -111,7 +111,7 @@ function moveBox(){
 			// fix any rounding at the end of the animation
 			if (steps == max_steps){
 				bill[i][j].position.y = box_to - 512 - 2;
-				faux_stack[i][j].scale.y = box_to*2;
+				faux_stack[i][j].scale.y = Math.max(0.00001, box_to*2);
 			}
 		}
 	}
