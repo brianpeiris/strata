@@ -3,6 +3,7 @@
 <head>
 <meta charset=utf-8>
 <title>Stocks Line Chart</title>
+<script src="../UnityClient/js/src/AltGeoMatSerializer.js"></script>
 <script src="http://sdk.altvr.com/libs/three.js/r73/build/three.js"></script>
 <script src="http://sdk.altvr.com/libs/altspace.js/latest/altspace.min.js"></script>
 <script src="http://sdk.altvr.com/libs/three.js/r73/examples/js/loaders/MTLLoader.js"></script>
@@ -120,7 +121,7 @@ function colSphereText(x, y, z, title, postfix, color1){
 	t_mesh.scale.z = 0.3;
 	t_mesh.scale.multiplyScalar(.08);
 	t_mesh.name = 'col_'+postfix+'_text_'+color1
-	t_mesh.visible = false;
+	recursiveVisibility(t_mesh, false);
 	scene.add(t_mesh);
 	
 }
@@ -207,7 +208,7 @@ function showColumn(){
 		
 	}
 	column_i += (360/poll_count);
-	if (column_i > 360) { clearAllColumns(); column_i = 0; }
+	if (column_i > 360) { clearAllColumns(); column_i = 0; }
 	window.setTimeout(showColumn, time_in_scene);
 }
 
@@ -216,7 +217,7 @@ function showToolTip(sphere_name){
 	for(var i=0; i<scene.children.length; i++){
 		obj_name = ''+scene.children[i].name
 		if(obj_name == sphere_name){
-			scene.children[i].visible = true
+			recursiveVisibility(scene.children[i], true);
 		}
 	}
 }	
@@ -226,7 +227,7 @@ function hideToolTip(sphere_name){
 	for(var i=0; i<scene.children.length; i++){
 		obj_name = ''+scene.children[i].name
 		if(obj_name == sphere_name){
-			scene.children[i].visible = false
+			recursiveVisibility(scene.children[i], false);
 		}
 	}
 }			
