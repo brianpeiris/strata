@@ -3,7 +3,6 @@
 <head>
 	<meta charset=utf-8>
 	<title>Piles of Cash</title>
-	<script src="../UnityClient/js/src/AltGeoMatSerializer.js"></script>
 	<script src="http://sdk.altvr.com/libs/three.js/r73/build/three.js"></script>
 	<script src="http://sdk.altvr.com/libs/altspace.js/latest/altspace.min.js"></script>
 	<script src="http://sdk.altvr.com/libs/three.js/r73/examples/js/loaders/MTLLoader.js"></script>
@@ -24,7 +23,7 @@ var renderer = altspace.getThreeJSRenderer();
 var time_in_scene = 1000;
 var column_i = 0;
 var steps = 0;
-var max_steps = 100;
+var max_steps = 20;
 var from_slide = 0;
 var to_slide = 1;
 var break_out = 0;
@@ -106,7 +105,7 @@ function moveBox(){
 			} else {
 				new_pos = ((box_to + Math.ceil((box_diff*new_x))))
 				bill[i][j].position.y = new_pos - 512 - 2;	
-				faux_stack[i][j].scale.y = new_pos*2;			
+				faux_stack[i][j].scale.y = Math.max(0.00001, new_pos*2);			
 			}
 	
 			// fix any rounding at the end of the animation
@@ -118,7 +117,7 @@ function moveBox(){
 	}
 
 	if (steps < max_steps){
-		setTimeout(moveBox, 10);
+		setTimeout(moveBox, 200);
 	} else {
 		console.log('step')
 		steps = 0;

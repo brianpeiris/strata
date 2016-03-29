@@ -7,8 +7,14 @@ function constructString(str, mat){
 			var char_geometry = new THREE.TextGeometry(str[i], {curveSegments: 2 });
 			char_geometry.computeBoundingBox();
 			char_cache[str[i]] = new THREE.Mesh(char_geometry, mat);
+			// HACK GearVR doesn't seem to like reused geometries 
+			// unless you add them to the scene individually first.
+			var dummy = char_cache[str[i]].clone();
+			dummy.visible = false;
+			scene.add(dummy);
 		}
 		var char = char_cache[str[i]].clone();
+		char.name = str[i];
 		char.material = mat;
 		char.position.x = offset;
 		var char_width = char.geometry.boundingBox.size().x;
