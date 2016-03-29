@@ -50,7 +50,6 @@ var materialCreator = new THREE.MTLLoader.MaterialCreator();
 materialCreator.crossOrigin = 'anonymous';
 
 var geometry = new THREE.BoxGeometry(1, 1, 1);
-//var material = new THREE.MeshFaceMaterial(materials);
 
 var bill100 = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({color:'#FFFFFF', 'map': materialCreator.loadTexture('images/money_face_90.jpg')}));
 
@@ -72,10 +71,8 @@ for(var i=0; i<max_width; i++){
 	temp = new Array();
 	side_temp = new Array();
 	for(var j=0; j<max_depth; j++){
-		new_hex = getRandomIntInclusive(0,9)+getRandomIntInclusive(0,9)+getRandomIntInclusive(0,9)+getRandomIntInclusive(0,9)+getRandomIntInclusive(0,9)+getRandomIntInclusive(0,9)
 		temp.push(new THREE.Mesh(geometry, money_face_mat));
 		side_temp.push(new THREE.Mesh(geometry, money_side_mat));
-		//temp.push(new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({color:'#'+new_hex})));
 	}
 	bill.push(temp)
 	faux_stack.push(side_temp)
@@ -96,11 +93,9 @@ function moveBox(){
 	steps+=1;
 	for(var i=0; i<max_width; i++){
 		for(var j=0; j<max_depth; j++){
-			//console.log(slides[from_slide][i][j][0])
 			box_from = slides[from_slide][i][j]
 			box_to = slides[to_slide][i][j]
 			box_diff = Math.abs(box_to - box_from);
-			//new_x = Math.cos(((1 - (steps/max_steps) * 90) * (Math.PI / 90))/2);
 			new_x = 1 -(steps/max_steps)
 
 
@@ -255,7 +250,7 @@ function buildSpace(x, y, z, pixelsPerMeter){
 function showAllLabels(postfix){
 	for(var i=0; i<scene.children.length; i++){
 		if(scene.children[i].name == 'slide'+postfix){
-			scene.children[i].visible = true
+			recursiveVisibility(scene.children[i], true);
 		}
 	}
 }
@@ -264,7 +259,7 @@ function showAllLabels(postfix){
 function clearAllLabels(){
 	for(var i=0; i<scene.children.length; i++){
 		if(scene.children[i].name.substr(0,5) == 'slide'){
-			scene.children[i].visible = false
+			recursiveVisibility(scene.children[i], false);
 		}
 	}
 }
@@ -284,7 +279,7 @@ function addText(title, subtitle, postfix, x, y, z){
 	t_mesh.scale.z = 0.3;
 	t_mesh.scale.multiplyScalar(1);
 	t_mesh.name = 'slide'+postfix
-	t_mesh.visible = false
+	recursiveVisibility(t_mesh, false);
 	scene.add(t_mesh);
 
 	if (subtitle != ''){
@@ -295,7 +290,7 @@ function addText(title, subtitle, postfix, x, y, z){
 		t_mesh.scale.z = 0.3;
 		t_mesh.scale.multiplyScalar(.6);
 		t_mesh.name = 'slide'+postfix
-		t_mesh.visible = false
+		recursiveVisibility(t_mesh, false);
 		scene.add(t_mesh);
 	}
 
