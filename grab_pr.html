@@ -181,14 +181,15 @@ function buildSpace(x, y, z, pixelsPerMeter){
 					var i = initData.index;
 					pilars.push(new THREE.Mesh( lineGeometry, lineMaterial ));
 					y_value = -1*(y/2)+(boxHeight/2);
-					pilars[i].position.set( -150, y_value, z*((i+1)/5)-(z/2))
+					var z_value = z*((i+1)/5)-(z/2);
+					pilars[i].position.set( -150, y_value, z_value)
 					prev_pilars.push(y_value)
 					
 					pilars[i].addBehaviors(
 						altspace.utilities.behaviors.Object3DSync({position: true}),
 						altspace.utilities.behaviors.Drag({
 							x: {min: -150, max: 0},
-							y: {min: -512, max: -512}
+							z: {min: z_value, max: z_value}
 						})
 					);
 					
