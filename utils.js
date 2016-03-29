@@ -24,3 +24,16 @@ function constructString(str, mat){
 	return strObj;
 }
 
+var colored_mat_cache = {};
+function getColoredMaterial(color) {
+	if (!colored_mat_cache[color]) {
+		colored_mat_cache[color] = new THREE.MeshBasicMaterial({color:color});
+	}
+	return colored_mat_cache[color];
+}
+
+function recursiveVisibility(obj, visible) {
+	obj.traverse(function (obj) {
+		obj.visible = visible;
+	});
+}

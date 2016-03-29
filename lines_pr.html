@@ -47,7 +47,7 @@ function buildSpace(width, height, depth, pixelsPerMeter){
 	radius_inner = (width / 2) * (circle_radius - 0.03)
 	pixelsPerMeter = 125
 	var lineGeometry = new THREE.CylinderGeometry(1,1,(pixelsPerMeter*2),6);
-	var lineMaterial = new THREE.MeshBasicMaterial( { color: 0x666666 } );
+	var lineMaterial = getColoredMaterial( 0x666666 );
 
 	for(var i=0; i<360; i+=(360/poll_count)){
 		var x = Math.sin(toRadians(i)) * radius
@@ -114,7 +114,7 @@ function buildSpace(width, height, depth, pixelsPerMeter){
 
 function colSphereText(x, y, z, title, postfix, color1){
 	
-	t_material = new THREE.MeshBasicMaterial({color:'#dedede'});
+	t_material = getColoredMaterial('#dedede');
 	t_mesh = constructString(title, t_material);
 	t_mesh.position.set(x, z, y);
 	t_mesh.rotation.y = postfix * (Math.PI / 180) + (Math.PI)
@@ -128,7 +128,7 @@ function colSphereText(x, y, z, title, postfix, color1){
 
 function colLineText(x, y, z, title, postfix){
 	
-	t_material = new THREE.MeshBasicMaterial({color:'#aaaaaa'});
+	t_material = getColoredMaterial('#aaaaaa');
 	t_mesh = constructString(title, t_material);
 	t_mesh.position.set(x, y, z);
 	t_mesh.rotation.y = postfix * (Math.PI / 180) + (Math.PI)
@@ -151,7 +151,7 @@ function lineSegment(x1, y1, z1, x2, y2, z2, i, color1, color2, line_title, line
 	geometry.faces.push( new THREE.Face3( 0, 1, 2 ), new THREE.Face3( 2, 1, 0 ) );
 	geometry.computeBoundingSphere();
 	
-	var geometryMaterial = new THREE.MeshBasicMaterial( { color: color1 } );
+	var geometryMaterial = getColoredMaterial( color1 );
 	var line = new THREE.Mesh( geometry, geometryMaterial );
 	line.name = 'col_'+i
 	line.visible = false
@@ -167,14 +167,14 @@ function lineSegment(x1, y1, z1, x2, y2, z2, i, color1, color2, line_title, line
 	geometry.faces.push( new THREE.Face3( 0, 1, 2 ), new THREE.Face3( 2, 1, 0 ) );
 	geometry.computeBoundingSphere();
 	
-	var geometryMaterial = new THREE.MeshBasicMaterial( { color: color2 } );
+	var geometryMaterial = getColoredMaterial( color2 );
 	var line = new THREE.Mesh( geometry, geometryMaterial );
 	line.name = 'col_'+i
 	line.visible = false
 	scene.add(line);
 
 	var geometry = new THREE.SphereGeometry( 4, 8, 8 );
-	var material = new THREE.MeshBasicMaterial( {color: color1} );
+	var material = getColoredMaterial( color1 );
 	var sphere = new THREE.Mesh( geometry, material );
 	sphere.name = 'col_'+i+'_sphere_'+color1;
 	sphere.visible = false;

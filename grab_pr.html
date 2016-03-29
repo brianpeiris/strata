@@ -300,14 +300,6 @@ function addTextS(title, x, z){
 	scene.add(t_mesh);
 }
 
-var str_mat_cache = {}
-function getColoredMaterial(color) {
-	if (!str_mat_cache[color]) {
-		str_mat_cache[color] = new THREE.MeshBasicMaterial({color:color});
-	}
-	return str_mat_cache[color];
-}
-
 var str_cache = {};
 function addString(str, color, name, x, y, z, scale){
 	if (!str_cache[str]) {
