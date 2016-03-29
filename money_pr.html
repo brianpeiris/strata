@@ -3,12 +3,14 @@
 <head>
 	<meta charset=utf-8>
 	<title>Piles of Cash</title>
+	<script src="../UnityClient/js/src/AltGeoMatSerializer.js"></script>
 	<script src="http://sdk.altvr.com/libs/three.js/r73/build/three.js"></script>
 	<script src="http://sdk.altvr.com/libs/altspace.js/latest/altspace.min.js"></script>
 	<script src="http://sdk.altvr.com/libs/three.js/r73/examples/js/loaders/MTLLoader.js"></script>
 	<script src="http://sdk.altvr.com/libs/three.js/r73/examples/js/geometries/TextGeometry.js"></script>
 	<script src="http://sdk.altvr.com/libs/three.js/r73/examples/js/utils/FontUtils.js"></script>
 	<script src="http://sdk.altvr.com/libs/three.js/r73/examples/fonts/helvetiker_regular.typeface.js"></script>
+	<script src="utils.js"></script>
 </head>
 <body>
 </body>
@@ -50,7 +52,7 @@ materialCreator.crossOrigin = 'anonymous';
 var geometry = new THREE.BoxGeometry(1, 1, 1);
 //var material = new THREE.MeshFaceMaterial(materials);
 
-var bill100 = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({color:'#FFFFFF', 'map': materialCreator.loadTexture('http://sudabot.com/vr/images/money_face_90.jpg')}));
+var bill100 = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({color:'#FFFFFF', 'map': materialCreator.loadTexture('images/money_face_90.jpg')}));
 
 
 // Setup all the stacks
@@ -58,8 +60,8 @@ var geometry = new THREE.BoxGeometry(1, 1, 1);
 var material = new THREE.MeshBasicMaterial({color:'#009999'});
 var materialCreator = new THREE.MTLLoader.MaterialCreator();
 materialCreator.crossOrigin = 'anonymous';
-money_face = materialCreator.loadTexture('http://sudabot.com/vr/images/money_face.jpg')
-money_side = materialCreator.loadTexture('http://sudabot.com/vr/images/money-side.png')
+money_face = materialCreator.loadTexture('images/money_face.jpg')
+money_side = materialCreator.loadTexture('images/money-side.png')
 var money_face_mat = new THREE.MeshBasicMaterial({color:'#FFFFFF', 'map': money_face});
 var money_side_mat = new THREE.MeshBasicMaterial({color:'#FFFFFF', 'map': money_side})
 
@@ -155,9 +157,8 @@ function buildSpace(x, y, z, pixelsPerMeter){
 	bill100.scale.set(166*pixelsPerMM, 67*pixelsPerMM, 1);
 	bill100.position.set((x/2)-pixelsPerMeter, (-1*y/2)+pixelsPerMeter, (-1*z/2)+pixelsPerMeter)
 	scene.add(bill100)
-	var t_geometry = new THREE.TextGeometry('$100 Bill', {curveSegments: 4 });
 	var t_material = new THREE.MeshBasicMaterial({color:'#ffffff'});
-	var t_mesh = new THREE.Mesh(t_geometry, t_material);
+	var t_mesh = constructString('$100 Bill', t_material);
 	t_mesh.position.set((x/2)-pixelsPerMeter, (-1*y/2), -300);
 	t_mesh.rotation.y = Math.PI / 2
 	t_mesh.scale.z = 0.3;
@@ -276,9 +277,8 @@ function addText(title, subtitle, postfix, x, y, z){
 	z = (z/2)
 
 	//Text
-	var t_geometry = new THREE.TextGeometry(title, {curveSegments: 4 });
 	var t_material = new THREE.MeshBasicMaterial({color:'#ffffff'});
-	var t_mesh = new THREE.Mesh(t_geometry, t_material);
+	var t_mesh = constructString(title, t_material);
 	t_mesh.position.set(x, y, z);
 	t_mesh.rotation.y = Math.PI / 2
 	t_mesh.scale.z = 0.3;
@@ -288,9 +288,8 @@ function addText(title, subtitle, postfix, x, y, z){
 	scene.add(t_mesh);
 
 	if (subtitle != ''){
-		var t_geometry = new THREE.TextGeometry(subtitle, {curveSegments: 4 });
 		var t_material = new THREE.MeshBasicMaterial({color:'#cccccc'});
-		var t_mesh = new THREE.Mesh(t_geometry, t_material);
+		var t_mesh = constructString(subtitle, t_material);
 		t_mesh.position.set(x, y-90, z);
 		t_mesh.rotation.y = Math.PI / 2
 		t_mesh.scale.z = 0.3;
@@ -309,7 +308,6 @@ function animate(){
 
 	renderer.render(scene)
 }
-var syncInstance = altspace.utilities.sync.getInstance({appId:"sudaMoney"});
 
 animate();
 
