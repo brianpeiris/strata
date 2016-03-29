@@ -31,14 +31,30 @@ var break_out = 0;
 max_width = 57;
 max_depth = 30;
 
+function SlideData (title, subtitle, i1, i2, j1, j2, height) {
+	this.title = title;
+	this.subtitle = subtitle;
+	this.i1 = i1;
+	this.i2 = i2;
+	this.j1 = j1;
+	this.j2 = j2;
+	this.height = height;
+}
+
+var slide_data = [
+	new SlideData('$1 Million', '', 20, 25, 14, 16, 10),
+	new SlideData('$1 Billion', '', 0, 50, 5, 25, 100),
+	new SlideData('$20,800', 'CA Annual Minimum Wage', 25, 26, 14, 15, 2),
+	new SlideData('$200,000,000', 'Titanic Film Budget', 0, 50, 5, 25, 20),
+	new SlideData('$2,180,000,000', 'Titanic Film Income', 0, 54, 5, 25, 202),
+	new SlideData('$1,700,000,000', 'Space Shuttle Endevor', 0, 57, 0, 30, 100),
+	new SlideData('$450,000,000', 'Average Shuttle Launch', 0, 50, 5, 25, 45)
+];
+var num_slides = slide_data.length;
 var slides = new Array();
-slides[0]  = new Array();
-slides[1]  = new Array();
-slides[2]  = new Array();
-slides[3]  = new Array();
-slides[4]  = new Array();
-slides[5]  = new Array();
-slides[6]  = new Array();
+for (var i = 0; i < num_slides; i++) {
+	slides.push([]);
+}
 
 function getRandomIntInclusive(min, max) {
 	return ''+(Math.floor(Math.random() * (max - min + 1)) + min);
@@ -123,8 +139,8 @@ function moveBox(){
 		steps = 0;
 		from_slide +=1;
 		to_slide +=1;
-		if (to_slide > 6)   { to_slide   = 0; }
-		if (from_slide > 6) { from_slide = 0; }
+		if (to_slide > num_slides - 1)   { to_slide   = 0; }
+		if (from_slide > num_slides - 1) { from_slide = 0; }
 		break_out+= 1
 
 		// Not sure why this is so short?
@@ -175,69 +191,18 @@ function buildSpace(x, y, z, pixelsPerMeter){
 		}
 	}
 
-	addText('$1 Million', '', 'slide0', x, y, z);
-	addText('$1 Billion', '', 'slide1', x, y, z);
-	addText('$20,800', 'CA Annual Minimum Wage', 'slide2', x, y, z);
-	addText('$200,000,000', 'Titanic Film Budget', 'slide3', x, y, z);
-	addText('$2,180,000,000', 'Titanic Film Income', 'slide4', x, y, z);
-	addText('$1,700,000,000', 'Space Shuttle Endevor', 'slide5', x, y, z);
-	addText('$450,000,000', 'Average Shuttle Launch', 'slide6', x, y, z);
-
-
 	brick_width = (67*pixelsPerMM);
 	brick_height = (10.922*pixelsPerMM)
 	brick_depth = (166*pixelsPerMM)
 
-	// 1 million USD in $100s
-	for(var i = 20; i<25; i++){
-		for(var j=14; j<16; j++){
-			slides[0][i][j] = 10*brick_height
-		}
-	}
-	// 1 Billion USD in $100s
-	for(var i = 0; i<50; i++){
-		for(var j=5; j<25; j++){
-			slides[1][i][j] = 100*brick_height
-		}
-	}	
+	for (var n = 0; n < slide_data.length; n++) {
+		var data = slide_data[n];
+		addText(data.title, data.subtitle, 'slide'+n, x, y, z);
 
-	// Minimum Wage
-	for(var i = 25; i<26; i++){
-		for(var j=14; j<15; j++){
-			slides[2][i][j] = 2*brick_height
-		}
-	}	
-
-
-	
-	// Titanic Film Budget
-	for(var i = 0; i<50; i++){
-		for(var j=5; j<25; j++){
-			slides[3][i][j] = 20*brick_height
-		}
-	}	
-	
-
-	// Titanic Film Income
-	for(var i = 0; i<54; i++){
-		for(var j=5; j<25; j++){
-			slides[4][i][j] = 202*brick_height
-		}
-	}
-	
-
-	// Shace shuttle Endevor
-	for(var i = 0; i<57; i++){
-		for(var j=0; j<30; j++){
-			slides[5][i][j] = 100*brick_height
-		}
-	}
-
-
-	// Shuttle Launch
-	for(var i = 0; i<50; i++){
-		for(var j=5; j<25; j++){
-			slides[6][i][j] = 45*brick_height
+		for(var i = data.i1; i<data.i2; i++){
+			for(var j=data.j1; j<data.j2; j++){
+				slides[n][i][j] = data.height*brick_height
+			}
 		}
 	}
 
