@@ -128,7 +128,7 @@ function colSphereText(x, y, z, title, postfix, color1){
 
 function colLineText(x, y, z, title, postfix){
 	
-	t_material = new THREE.MeshBasicMaterial({color:'#666666'});
+	t_material = new THREE.MeshBasicMaterial({color:'#aaaaaa'});
 	t_mesh = constructString(title, t_material);
 	t_mesh.position.set(x, y, z);
 	t_mesh.rotation.y = postfix * (Math.PI / 180) + (Math.PI)
