@@ -23,7 +23,7 @@ var renderer = altspace.getThreeJSRenderer();
 var time_in_scene = 1000;
 var column_i = 0;
 var steps = 0;
-var max_steps = 20;
+var max_steps = 100;
 var from_slide = 0;
 var to_slide = 1;
 var break_out = 0;
@@ -31,14 +31,30 @@ var break_out = 0;
 max_width = 57;
 max_depth = 30;
 
+function SlideData (title, subtitle, i1, i2, j1, j2, height) {
+	this.title = title;
+	this.subtitle = subtitle;
+	this.i1 = i1;
+	this.i2 = i2;
+	this.j1 = j1;
+	this.j2 = j2;
+	this.height = height;
+}
+
+var slide_data = [
+	new SlideData('$1 Million', '', 20, 25, 14, 16, 10),
+	new SlideData('$1 Billion', '', 0, 50, 5, 25, 100),
+	new SlideData('$20,800', 'CA Annual Minimum Wage', 25, 26, 14, 15, 2),
+	new SlideData('$200,000,000', 'Titanic Film Budget', 0, 50, 5, 25, 20),
+	new SlideData('$2,180,000,000', 'Titanic Film Income', 0, 54, 5, 25, 202),
+	new SlideData('$1,700,000,000', 'Space Shuttle Endeavor', 0, 57, 0, 30, 100),
+	new SlideData('$450,000,000', 'Average Shuttle Launch', 0, 50, 5, 25, 45)
+];
+var num_slides = slide_data.length;
 var slides = new Array();
-slides[0]  = new Array();
-slides[1]  = new Array();
-slides[2]  = new Array();
-slides[3]  = new Array();
-slides[4]  = new Array();
-slides[5]  = new Array();
-slides[6]  = new Array();
+for (var i = 0; i < num_slides; i++) {
+	slides.push([]);
+}
 
 function getRandomIntInclusive(min, max) {
 	return ''+(Math.floor(Math.random() * (max - min + 1)) + min);
@@ -48,16 +64,16 @@ function getRandomIntInclusive(min, max) {
 var materialCreator = new THREE.MTLLoader.MaterialCreator();
 materialCreator.crossOrigin = 'anonymous';
 
-var geometry = new THREE.BoxGeometry(1, 1, 1);
-
-var bill100 = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({color:'#FFFFFF', 'map': materialCreator.loadTexture('images/money_face_90.jpg')}));
+var bill100 = new THREE.Mesh(
+	new THREE.BoxGeometry(1, 1, 1),
+	new THREE.MeshBasicMaterial({
+		color:'#FFFFFF',
+		map: materialCreator.loadTexture('images/money_face_90.jpg')
+	})
+);
 
 
 // Setup all the stacks
-var geometry = new THREE.BoxGeometry(1, 1, 1);
-var material = new THREE.MeshBasicMaterial({color:'#009999'});
-var materialCreator = new THREE.MTLLoader.MaterialCreator();
-materialCreator.crossOrigin = 'anonymous';
 money_face = materialCreator.loadTexture('images/money_face.jpg')
 money_side = materialCreator.loadTexture('images/money-side.png')
 var money_face_mat = new THREE.MeshBasicMaterial({color:'#FFFFFF', 'map': money_face});
@@ -66,65 +82,72 @@ var money_side_mat = new THREE.MeshBasicMaterial({color:'#FFFFFF', 'map': money_
 var bill = new Array();
 var faux_stack = new Array();
 
-for(var i=0; i<max_width; i++){
-	temp = new Array();
-	side_temp = new Array();
-	for(var j=0; j<max_depth; j++){
-		temp.push(new THREE.Mesh(geometry, money_face_mat));
-		side_temp.push(new THREE.Mesh(geometry, money_side_mat));
+function repeatUVs(geometry, x, y, faces) {
+	var faceVertexUvs = geometry.faceVertexUvs[0];
+	for (var i = 0; i < faceVertexUvs.length; i++) {
+		if (faces && !faces.includes(i)) { continue; }
+		for (var j = 0; j < faceVertexUvs[i].length; j++) {
+			faceVertexUvs[i][j].x = faceVertexUvs[i][j].x === 0 ? 0 : x;
+			faceVertexUvs[i][j].y = faceVertexUvs[i][j].y === 0 ? 0 : y;
+		}
 	}
-	bill.push(temp)
-	faux_stack.push(side_temp)
+}
+
+for(var i=0; i<slide_data.length; i++){
+	var data = slide_data[i];
+
+	var geometry = new THREE.BoxGeometry(1, 1, 1);
+	var data_depth = data.j2 - data.j1;
+	var data_width = data.i2 - data.i1;
+	repeatUVs(geometry, data_width, data_depth);
+	var bill_obj = new THREE.Mesh(geometry, money_face_mat);
+	bill.push(bill_obj);
+
+	geometry = new THREE.BoxGeometry(1, 1, 1);
+	repeatUVs(geometry, data_width, data_depth / 4);
+	repeatUVs(geometry, data_width * (data_depth / data_width), data_depth / 4, [0, 1, 2, 3]);
+	var faux_obj = new THREE.Mesh(geometry, money_side_mat);
+	faux_stack.push(faux_obj);
 }
 
 // Set everyone to ZERO
 for(var k=0; k<slides.length; k++){
-	for(var i=0; i<max_width; i++){
-		temp = new Array()
-		for(var j=0; j<max_depth; j++){
-			temp.push(-2);
-		}
-		slides[k].push(temp)
-	}
+	slides[k].push(-2)
 }
 
 function moveBox(){
 	steps+=1;
-	for(var i=0; i<max_width; i++){
-		for(var j=0; j<max_depth; j++){
-			box_from = slides[from_slide][i][j]
-			box_to = slides[to_slide][i][j]
-			box_diff = Math.abs(box_to - box_from);
-			new_x = 1 -(steps/max_steps)
+	for(var n=0; n<slides.length; n++){
+		box_from = n === from_slide ? slides[from_slide] : -2;
+		box_to = n === to_slide ? slides[to_slide] : -2;
+		box_diff = Math.abs(box_to - box_from);
+		new_x = 1 -(steps/max_steps)
+		var data = slide_data[n];
+		var stack_height = data.height;
 
+		if (box_to > box_from){
+			new_x *= -1
+		}
+		new_pos = box_to + Math.ceil(box_diff*new_x)
+		bill[n].position.y = new_pos - 512 - 2;	
+		faux_stack[n].position.y = new_pos - 512 - 2 - stack_height;	
 
-			if (box_to > box_from){
-				new_pos = ((box_to - Math.ceil((box_diff*new_x))))
-				bill[i][j].position.y = new_pos - 512 - 2;	
-				faux_stack[i][j].scale.y = new_pos*2;		
-			} else {
-				new_pos = ((box_to + Math.ceil((box_diff*new_x))))
-				bill[i][j].position.y = new_pos - 512 - 2;	
-				faux_stack[i][j].scale.y = Math.max(0.00001, new_pos*2);			
-			}
-	
-			// fix any rounding at the end of the animation
-			if (steps == max_steps){
-				bill[i][j].position.y = box_to - 512 - 2;
-				faux_stack[i][j].scale.y = Math.max(0.00001, box_to*2);
-			}
+		// fix any rounding at the end of the animation
+		if (steps == max_steps){
+			bill[n].position.y = box_to - 512 - 2;
+			faux_stack[n].position.y = box_to - 512 - 2 - stack_height;
 		}
 	}
 
 	if (steps < max_steps){
-		setTimeout(moveBox, 200);
+		setTimeout(moveBox, 20);
 	} else {
 		console.log('step')
 		steps = 0;
 		from_slide +=1;
 		to_slide +=1;
-		if (to_slide > 6)   { to_slide   = 0; }
-		if (from_slide > 6) { from_slide = 0; }
+		if (to_slide > num_slides - 1)   { to_slide   = 0; }
+		if (from_slide > num_slides - 1) { from_slide = 0; }
 		break_out+= 1
 
 		// Not sure why this is so short?
@@ -141,104 +164,46 @@ function resetLabels(){
 enclosure = altspace.getEnclosure()
 enclosure.then(function(val) {
 	buildSpace(val.innerWidth, val.innerHeight, val.innerDepth, val.pixelsPerMeter);
+}).otherwise(function (err) {
+	console.error(err, err.toString());
 });
 
 function buildSpace(x, y, z, pixelsPerMeter){
 	// Dollar bill size 66.3 mm (2.61 inches) wide, 166 mm (6.14 inches)
 	pixelsPerMM = pixelsPerMeter/1000
 
-	// Single Spinning $100
-	bill100.scale.set(166*pixelsPerMM, 67*pixelsPerMM, 1);
-	bill100.position.set((x/2)-pixelsPerMeter, (-1*y/2)+pixelsPerMeter, (-1*z/2)+pixelsPerMeter)
-	scene.add(bill100)
-	var t_material = new THREE.MeshBasicMaterial({color:'#ffffff'});
-	var t_mesh = constructString('$100 Bill', t_material);
-	t_mesh.position.set((x/2)-pixelsPerMeter, (-1*y/2), -300);
-	t_mesh.rotation.y = Math.PI / 2
-	t_mesh.scale.z = 0.3;
-	t_mesh.scale.multiplyScalar(.4);
-	scene.add(t_mesh);
-
-
-
-	for(var i=0; i<max_width; i++){
-		for(var j=0; j<max_depth; j++){
-			bill[i][j].scale.set(67*pixelsPerMM, 1,  166*pixelsPerMM);
-			bill[i][j].position.set(i*10 - (x/2) + 256, 0 - (y/2) - 2, j*25 - (z/2) + 128)
-			scene.add(bill[i][j])
-
-
-			faux_stack[i][j].scale.set(67*pixelsPerMM, 1,  166*pixelsPerMM);
-			faux_stack[i][j].position.set(i*10 - (x/2) + 256, 0 - (y/2) - 3, j*25 - (z/2) + 128)
-			scene.add(faux_stack[i][j])
-
-		}
-	}
-
-	addText('$1 Million', '', 'slide0', x, y, z);
-	addText('$1 Billion', '', 'slide1', x, y, z);
-	addText('$20,800', 'CA Annual Minimum Wage', 'slide2', x, y, z);
-	addText('$200,000,000', 'Titanic Film Budget', 'slide3', x, y, z);
-	addText('$2,180,000,000', 'Titanic Film Income', 'slide4', x, y, z);
-	addText('$1,700,000,000', 'Space Shuttle Endevor', 'slide5', x, y, z);
-	addText('$450,000,000', 'Average Shuttle Launch', 'slide6', x, y, z);
-
-
 	brick_width = (67*pixelsPerMM);
 	brick_height = (10.922*pixelsPerMM)
 	brick_depth = (166*pixelsPerMM)
 
-	// 1 million USD in $100s
-	for(var i = 20; i<25; i++){
-		for(var j=14; j<16; j++){
-			slides[0][i][j] = 10*brick_height
-		}
-	}
-	// 1 Billion USD in $100s
-	for(var i = 0; i<50; i++){
-		for(var j=5; j<25; j++){
-			slides[1][i][j] = 100*brick_height
-		}
-	}	
+	// Single Spinning $100
+	bill100.scale.set(brick_depth, brick_width, 1);
+	bill100.position.set((x/2)-pixelsPerMeter, (-1*y/2)+pixelsPerMeter, (-1*z/2)+pixelsPerMeter)
+	scene.add(bill100)
 
-	// Minimum Wage
-	for(var i = 25; i<26; i++){
-		for(var j=14; j<15; j++){
-			slides[2][i][j] = 2*brick_height
-		}
-	}	
+	var t_material = new THREE.MeshBasicMaterial({color:'#ffffff'});
+	var t_mesh = constructString('$100 Bill', t_material);
+	t_mesh.position.set((x/2)-pixelsPerMeter, (-1*y/2), -300);
+	t_mesh.rotation.y = Math.PI / 2;
+	t_mesh.scale.z = 0.3;
+	t_mesh.scale.multiplyScalar(.4);
+	scene.add(t_mesh);
 
+	for(var n=0; n<slide_data.length; n++){
+		var data = slide_data[n];
+		var width = data.i2 - data.i1;
+		var depth = data.j2 - data.j1;
+		bill[n].scale.set(width * brick_width, 1,  depth* brick_depth);
+		bill[n].position.set(0, (y/2) - 2, 0)
+		scene.add(bill[n])
 
-	
-	// Titanic Film Budget
-	for(var i = 0; i<50; i++){
-		for(var j=5; j<25; j++){
-			slides[3][i][j] = 20*brick_height
-		}
-	}	
-	
+		faux_stack[n].scale.set(width*brick_width, data.height * 2,  depth*brick_depth);
+		faux_stack[n].position.set(0, (y/2) - 3, 0)
+		scene.add(faux_stack[n])
 
-	// Titanic Film Income
-	for(var i = 0; i<54; i++){
-		for(var j=5; j<25; j++){
-			slides[4][i][j] = 202*brick_height
-		}
-	}
-	
-
-	// Shace shuttle Endevor
-	for(var i = 0; i<57; i++){
-		for(var j=0; j<30; j++){
-			slides[5][i][j] = 100*brick_height
-		}
-	}
-
-
-	// Shuttle Launch
-	for(var i = 0; i<50; i++){
-		for(var j=5; j<25; j++){
-			slides[6][i][j] = 45*brick_height
-		}
+		var data = slide_data[n];
+		addText(data.title, data.subtitle, 'slide'+n, x, y, z);
+		slides[n] = data.height*brick_height
 	}
 
 	moveBox();
